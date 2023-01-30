@@ -11,6 +11,7 @@ import (
 
 	"github.com/crud-recipe/handlers"
 	"github.com/gin-gonic/gin"
+	"github.com/go-redis/redis"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
@@ -27,27 +28,14 @@ func init() {
 	log.Println("Connected to MongoDB")
 	collection := client.Database(os.Getenv(
 		"MONGO_DATABASE")).Collection("recipes")
-	recipesHandler = handlers.NewRecipesHandler(ctx, collection)
-}
+	redisClient := redis.NewClient(&redis.Options{
+		Addr:     "localhost:6379",
+		Password: "",
+		DB:       0,
+	})
 
-// func deleteRecipeHandler(c *gin.Context) {
-// 	id := c.Param("id")
-// 	index := -1
-// 	for i := 0; i < len(recipes); i++ {
-// 		if recipes[i].ID == id {
-// 			index = i
-// 			break
-// 		}
-// 	}
-// 	if index == -1 {
-// 		c.JSON(http.StatusNotFound, gin.H{
-// 			"error": "recipe not found"})
-// 		return
-// 	}
-// 	recipes = append(recipes[:index], recipes[index+1:]...)
-// 	c.JSON(http.StatusOK, gin.H{
-// 		"message": "Recipe has been deleted"})
-// }
+	recipesHandler = handlers.NewRecipesHandler(ctx, collection, redisClient)
+}
 
 // func searchRecipesHandler(c *gin.Context) {
 // 	tag := c.Query("tag")
@@ -72,7 +60,8 @@ func main() {
 
 	router.POST("/recipes", recipesHandler.NewRecipeHandler)
 	router.GET("/recipes", recipesHandler.ListRecipesHandler)
-	router.PUT("/recipes/:id", recipesHandler.gg)
+	router.PUT("/recipes/:id", recipesHandler.UpdateRecipeHandler)
+	router.DELETE("/recipes/:id", recipesHandler.DeleteRecipeHandler)
 	router.Run()
 
 }
