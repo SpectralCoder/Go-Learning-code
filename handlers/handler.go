@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/crud-recipe/models"
@@ -65,6 +66,13 @@ func (handler *RecipesHandler) ListRecipesHandler(c *gin.Context) {
 }
 
 func (handler *RecipesHandler) NewRecipeHandler(c *gin.Context) {
+	log.Printf(c.GetHeader("X-API-KEY"))
+	if c.GetHeader("X-API-KEY") != os.Getenv("X_API_KEY") {
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"error": "API key not provided or invalid"})
+		return
+	}
+
 	var recipe models.Recipe
 	if err := c.ShouldBindJSON(&recipe); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{
@@ -124,4 +132,20 @@ func (handler *RecipesHandler) DeleteRecipeHandler(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Recipe has been deleted"})
+}
+
+func (handler *RecipesHandler) GetOneRecipeHandler(c *gin.Context) {
+	id := c.Param("id")
+	objectId, _ := primitive.ObjectIDFromHex(id)
+	cur := handler.collection.FindOne(handler.ctx, bson.M{
+		"_id": objectId,
+	})
+	var recipe models.Recipe
+	err := cur.Decode(&recipe)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, recipe)
 }
