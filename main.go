@@ -7,11 +7,12 @@ import (
 
 	"go.mongodb.org/mongo-driver/mongo"
 
-	"go.mongodb.org/mongo-driver/mongo/options"
-
 	"github.com/crud-recipe/handlers"
+	"github.com/gin-contrib/sessions"
+	redisStore "github.com/gin-contrib/sessions/redis"
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/mongo/readpref"
 )
 
@@ -60,9 +61,14 @@ func init() {
 
 func main() {
 	router := gin.Default()
+	store, _ := redisStore.NewStore(10, "tcp", "localhost:6379", "", []byte("secret"))
+
+	router.Use(sessions.Sessions("recipes_api", store))
 	router.GET("/recipes", recipesHandler.ListRecipesHandler)
 	router.POST("/signin", authHandler.SignInHandler)
 	router.POST("/refresh", authHandler.RefreshHandler)
+	router.POST("/signout", authHandler.SignOutHandler)
+
 	authorized := router.Group("/")
 	authorized.Use(authHandler.AuthMiddleware())
 	{
