@@ -16,11 +16,11 @@ func main() {
 
 	users := map[string]string{
 
-		"admin": "fCRmh4Q2J7Rseqkz",
+		"admin": "gg",
 
-		"packt": "RE4zfHB35VPtTkbT",
+		"packt": "kk",
 
-		"mlabouardy": "L3nSFRcZzNQ67bcc",
+		"mlabouardy": "xx",
 	}
 
 	ctx := context.Background()
